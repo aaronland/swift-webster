@@ -23,7 +23,7 @@ public class Webster {
     private let webView = WebView()
     private let delegate = WebViewDelegate()
     
-    init() {
+    public init() {
                 
     }
     
