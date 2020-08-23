@@ -32,6 +32,19 @@ public class Webster {
     
     public func render(source: URL) -> Result<Data, Error> {
 
+        /*
+         
+         Ideally we would just write directly to pdf_data but I am unsure
+         about how to do that with NSPrintOperation (see notes in WebView.swift)
+         so instead we will create a temporary file, write to that then
+         read the data and remove the temporary file on the way out. This
+         is not ideal but it makes for a cleaner interface for using this
+         package and not assuming that files are always been written.
+         (20200823/straup)
+         */
+        
+        var pdf_data: Data!
+        
         let temp_dir = URL(fileURLWithPath: NSTemporaryDirectory(),
                                                        isDirectory: true)
         
@@ -58,7 +71,7 @@ public class Webster {
         webView.frame = NSRect(x: 0.0, y: 0.0, width: 800, height: 640)
         webView.mainFrame.load(URLRequest(url: source))
         
-        //This little bit gets us a runloop and spins it. Otherwise nothing above here works.
+        // Blocking run loop is required to wait for the PDF to be generated.
         
         var working = true
         let runloop = RunLoop.current
@@ -84,16 +97,14 @@ public class Webster {
         if working {
             return .failure(Errors.runLoopExit)
         }
-        
-        var data: Data!
-        
+                
         do {
-            try data = Data(contentsOf: target)
+            try pdf_data = Data(contentsOf: target)
         } catch (let error) {
             return .failure(error)
         }
         
-        return .success(data)
+        return .success(pdf_data)
         
     }
 }

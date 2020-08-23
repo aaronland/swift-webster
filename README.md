@@ -10,10 +10,6 @@ import Webster
 guard let source_url = URL(string: "https://example.com") else {
     fatalError("Invalid source URL.")
 }
-  
-guard let target_url = URL(string: "/usr/local/example.pdf") else {
-                fatalError("Invalid destination URL.")
-}
 
 let w = Webster()
 
@@ -22,10 +18,14 @@ w.width = 11.0
 w.height = 8.5
 w.margin = 0.5
 
-let result = w.run(source: source_url, target: target_url)
+let result = w.render(source: source_url)
     
 if case .failure(let error) = result {
     fatalError("Failed to generate PDF file, \(error.localizedDescription)")
+}
+
+if case .success(let data) = result {
+    // Do something with data here
 }
 ```
 

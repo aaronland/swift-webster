@@ -29,6 +29,16 @@ class WebViewDelegate: NSObject, WebFrameLoadDelegate {
             NotificationCenter.default.post(name: Notification.Name("status"), object: Status.complete)
         }
                     
+        /*
+         
+         How can we make NSPrintInfo.AttributeKey.jobSavingURL a (NS)Data instance?
+         Specifically, so that we don't need to worry about creating/reading/removing
+         temporary files in Webster.swift... (20200823/straup)
+         
+         */
+        
+        // https://developer.apple.com/documentation/appkit/nsprintoperation
+        
         let printOpts: [NSPrintInfo.AttributeKey : Any] = [
             NSPrintInfo.AttributeKey.jobDisposition : NSPrintInfo.JobDisposition.save,
             NSPrintInfo.AttributeKey.jobSavingURL   : target!
