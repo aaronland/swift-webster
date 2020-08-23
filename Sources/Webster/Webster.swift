@@ -1,5 +1,6 @@
 import Foundation
 import WebKit
+import Logging
 
 public enum Status {
     case printing
@@ -23,12 +24,29 @@ public class Webster {
     private let webView = WebView()
     private let delegate = WebViewDelegate()
     
+    private let logger = Logger(label: "webster", factory: StreamLogHandler.standardError)
+    
     public init() {
                 
     }
     
-    public func run(source: URL, target: URL) -> Result<Void, Error> {
-                
+    public func render(source: URL) -> Result<Data, Error> {
+
+        let temp_dir = URL(fileURLWithPath: NSTemporaryDirectory(),
+                                                       isDirectory: true)
+        
+        let fname = UUID().uuidString + ".pdf"
+
+        let target = temp_dir.appendingPathComponent(fname)
+        
+        defer {
+            do {
+                try FileManager.default.removeItem(at: target)
+            } catch (let error) {
+                logger.warning("Failed to remove \(target.absoluteString), \(error.localizedDescription)")
+            }
+        }
+        
         delegate.dpi = CGFloat(dpi)
         delegate.width = CGFloat(width)
         delegate.height = CGFloat(height)
@@ -67,7 +85,15 @@ public class Webster {
             return .failure(Errors.runLoopExit)
         }
         
-        return .success(())
+        var data: Data!
+        
+        do {
+            try data = Data(contentsOf: target)
+        } catch (let error) {
+            return .failure(error)
+        }
+        
+        return .success(data)
         
     }
 }
