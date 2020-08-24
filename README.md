@@ -33,6 +33,8 @@ if case .success(let data) = result {
 
 Under the hood this package is using [NSPrintOperation](https://developer.apple.com/documentation/appkit/nsprintoperation) to render a `WebView`. Ideally I would like `NSPrintOperation` to print directly to a `Data` instance but it's unclear to me whether this is possible or how to do it.
 
+_Really what we want is to be able to pass the `NSPrintOperation` method something like an abstract "writer" similar to the Go languae [io.Writer](https://golang.org/pkg/io/) interface. I don't know whether this is even possible in Swift._
+
 Instead the `render` method creates a temporary file, writes to it, reads the data and removes the temporary file on exit. This introduces extra overhead but, hopefully, keeps the interface a little more agnostic about how the resultant PDF document is used.
 
 ## Credits
