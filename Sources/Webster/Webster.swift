@@ -30,7 +30,7 @@ public class Webster {
                 
     }
     
-    public func render(source: URL) -> Result<Data, Error> {
+    public func render(source: URL, completionHandler: @escaping (Result<Data, Error>) -> Void) -> Void {
 
         /*
          
@@ -95,16 +95,18 @@ public class Webster {
         }
         
         if working {
-            return .failure(Errors.runLoopExit)
+            completionHandler(.failure(Errors.runLoopExit))
+            return
         }
                 
         do {
             try pdf_data = Data(contentsOf: target)
         } catch (let error) {
-            return .failure(error)
+            completionHandler(.failure(error))
+            return
         }
         
-        return .success(pdf_data)
-        
+        completionHandler(.success(pdf_data))
+        return
     }
 }
