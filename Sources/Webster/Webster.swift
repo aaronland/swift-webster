@@ -39,7 +39,7 @@ public class Webster {
                                                queue: .main) { (notification) in
             
             let status = notification.object as! Status
-            print("STATUS", status)
+            self.logger.debug("Received status notification: \(status)")
             
             switch status {
             case Status.complete:
@@ -56,7 +56,9 @@ public class Webster {
 
         working = true
         
-        self.renderAsync(source: source, completionHandler: completionHandler)
+        DispatchQueue.global().async {
+            self.renderAsync(source: source, completionHandler: completionHandler)
+        }
         
         let runloop = RunLoop.current
         
@@ -64,7 +66,6 @@ public class Webster {
             
         }
         
-        print("STOP")
         return
     }
     
@@ -88,7 +89,6 @@ public class Webster {
         } else {
             
             defer {
-                print("SEND COMPLETE")
                 NotificationCenter.default.post(name: Notification.Name("status"), object: Status.complete)
             }
             
@@ -158,7 +158,6 @@ public class Webster {
                 return
             }
             
-            print("WOOP")
             completionHandler(.success(pdf_data))
             return
         }
