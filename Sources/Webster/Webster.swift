@@ -29,36 +29,41 @@ public class Webster {
     
     private let logger = Logger(label: "webster", factory: StreamLogHandler.standardError)
     
+    private var rendering = false
+    private var working = false
+    
     public init() {
-        
+     
+        NotificationCenter.default.addObserver(forName: Notification.Name(rawValue: "status"),
+                                               object: nil,
+                                               queue: .main) { (notification) in
+            
+            let status = notification.object as! Status
+            print("STATUS", status)
+            
+            switch status {
+            case Status.complete:
+                self.working = false
+            case Status.printed:
+                self.rendering = false
+            default:
+                ()
+            }
+        }
     }
     
     public func render(source: URL, completionHandler: @escaping (Result<Data, Error>) -> Void) -> Void {
 
         self.renderAsync(source: source, completionHandler: completionHandler)
         
-        var working = true
+        working = true
         let runloop = RunLoop.current
-        
-        NotificationCenter.default.addObserver(forName: Notification.Name(rawValue: "status"),
-                                               object: nil,
-                                               queue: .main) { (notification) in
-            
-            let status = notification.object as! Status
-            print("ASYNC STATUS", status)
-            
-            switch status {
-            case Status.complete:
-                working = false
-            default:
-                ()
-            }
-        }
         
         while working && runloop.run(mode: .default, before: .distantFuture) {
             
         }
         
+        print("STOP")
         return
     }
     
@@ -132,29 +137,15 @@ public class Webster {
             
             // Blocking run loop is required to wait for the PDF to be generated.
             
-            var working = true
+            rendering = true
+            
             let runloop = RunLoop.current
-            
-            NotificationCenter.default.addObserver(forName: Notification.Name(rawValue: "status"),
-                                                   object: nil,
-                                                   queue: .main) { (notification) in
-                
-                let status = notification.object as! Status
-                print("STATUS", status)
-                
-                switch status {
-                case Status.printed:
-                    working = false
-                default:
-                    ()
-                }
-            }
-            
-            while working && runloop.run(mode: .default, before: .distantFuture) {
+                                
+            while rendering && runloop.run(mode: .default, before: .distantFuture) {
                 
             }
             
-            if working {
+            if rendering {
                 completionHandler(.failure(Errors.runLoopExit))
                 return
             }
