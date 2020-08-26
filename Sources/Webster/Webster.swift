@@ -36,7 +36,7 @@ public class Webster {
 
         print("RENDER")
         
-        if #available(iOS 14.0, macCatalyst 14.0, *) {
+        if #available(macCatalyst 14.0, *) {
             
             print("SAD")
             completionHandler(.failure(Errors.notImplemented))
