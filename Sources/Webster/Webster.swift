@@ -45,6 +45,7 @@ public class Webster {
                                                queue: .main) { (notification) in
             
             let status = notification.object as! Status
+            print("ASYNC STATUS", status)
             
             switch status {
             case Status.complete:
@@ -81,6 +82,7 @@ public class Webster {
         } else {
             
             defer {
+                print("SEND COMPLETE")
                 NotificationCenter.default.post(name: Notification.Name("status"), object: Status.complete)
             }
             
@@ -138,6 +140,7 @@ public class Webster {
                                                    queue: .main) { (notification) in
                 
                 let status = notification.object as! Status
+                print("STATUS", status)
                 
                 switch status {
                 case Status.printed:
@@ -163,6 +166,7 @@ public class Webster {
                 return
             }
             
+            print("WOOP")
             completionHandler(.success(pdf_data))
             return
         }
