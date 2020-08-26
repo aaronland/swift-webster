@@ -34,6 +34,8 @@ public class Webster {
     
     public func render(source: URL, completionHandler: @escaping (Result<Data, Error>) -> Void) -> Void {
 
+        print("RENDER")
+        
         if #available(iOS 14.0, macCatalyst 14.0, *) {
             
             completionHandler(.failure(Errors.notImplemented))
@@ -49,7 +51,9 @@ public class Webster {
             return
             */
         }
-          
+        
+        print("BEFORE")
+        
         // before iOS 14, MacOS 11
         
             let webView = WebView()
@@ -118,6 +122,7 @@ public class Webster {
         }
         
         if working {
+            print("WHAT")
             completionHandler(.failure(Errors.runLoopExit))
             return
         }
