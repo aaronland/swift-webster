@@ -56,9 +56,7 @@ public class Webster {
 
         working = true
         
-        DispatchQueue.global().async {
-            self.renderAsync(source: source, completionHandler: completionHandler)
-        }
+        self.renderAsync(source: source, completionHandler: completionHandler)
         
         let runloop = RunLoop.current
         
@@ -69,7 +67,7 @@ public class Webster {
         return
     }
     
-    public func renderAsync(source: URL, completionHandler: @escaping (Result<Data, Error>) -> Void) -> Void {
+    private func renderAsync(source: URL, completionHandler: @escaping (Result<Data, Error>) -> Void) -> Void {
                 
         if #available(OSX 10.16, *) {
             
