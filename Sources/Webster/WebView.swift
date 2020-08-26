@@ -21,11 +21,9 @@ class WebViewDelegate: NSObject, WebFrameLoadDelegate {
         NotificationCenter.default.post(name: Notification.Name("status"), object: Status.printing)
         
         defer {
-            NotificationCenter.default.post(name: Notification.Name("status"), object: Status.complete)
+            NotificationCenter.default.post(name: Notification.Name("status"), object: Status.printed)
         }
-                    
-        print("WRITE", target)
-        
+                            
         // https://developer.apple.com/documentation/appkit/nsprintoperation
         
         let printOpts: [NSPrintInfo.AttributeKey : Any] = [
