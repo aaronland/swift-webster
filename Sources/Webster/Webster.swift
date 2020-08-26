@@ -38,6 +38,7 @@ public class Webster {
         
         if #available(iOS 14.0, macCatalyst 14.0, *) {
             
+            print("SAD")
             completionHandler(.failure(Errors.notImplemented))
             return
             
