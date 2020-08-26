@@ -54,9 +54,10 @@ public class Webster {
     
     public func render(source: URL, completionHandler: @escaping (Result<Data, Error>) -> Void) -> Void {
 
+        working = true
+        
         self.renderAsync(source: source, completionHandler: completionHandler)
         
-        working = true
         let runloop = RunLoop.current
         
         while working && runloop.run(mode: .default, before: .distantFuture) {
