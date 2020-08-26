@@ -1,12 +1,9 @@
-//
-//  File.swift
-//  
-//
-//  Created by asc on 8/25/20.
-//
-
 import Foundation
 import WebKit
+
+public enum WKWebViewDelegateErrors: Error {
+    case notImplemented
+}
 
 public class WKWebViewDelegate: NSObject, WKNavigationDelegate {
     
@@ -16,9 +13,18 @@ public class WKWebViewDelegate: NSObject, WKNavigationDelegate {
         on_complete = completionHandler
     }
     
+    // https://developer.apple.com/documentation/webkit/wkwebview/3650490-createpdf
+
     public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         
-        // https://developer.apple.com/documentation/webkit/wkwebview/3650490-createpdf
-        // webView.createPDF(cfg, on_complete)
+        if #available(OSX 10.16, *) {
+            
+            on_complete(.failure(WKWebViewDelegateErrors.notImplemented))
+            // let cfg = WKPDFConfiguration()
+            // webView.createPDF(cfg, on_complete)
+        } else {
+            on_complete(.failure(WKWebViewDelegateErrors.notImplemented))
+        }
+        
     }
 }

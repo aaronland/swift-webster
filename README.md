@@ -18,15 +18,18 @@ w.width = 11.0
 w.height = 8.5
 w.margin = 0.5
 
-let result = w.render(source: source_url)
-    
-if case .failure(let error) = result {
-    fatalError("Failed to generate PDF file, \(error.localizedDescription)")
+on_complete = func(result: Result<Data, Error) -> Void {
+
+    if case .failure(let error) = result {
+        fatalError("Failed to generate PDF file, \(error.localizedDescription)")
+    }
+
+    if case .success(let data) = result {
+        // Do something with data here
+    }
 }
 
-if case .success(let data) = result {
-    // Do something with data here
-}
+w.render(source: source_url, completionHandler: on_complete)
 ```
 
 ## Notes

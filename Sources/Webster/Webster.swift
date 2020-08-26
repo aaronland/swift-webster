@@ -9,20 +9,22 @@ public enum Status {
 
 public enum Errors: Error {
     case runLoopExit
+    case notImplemented
 }
 
 public class Webster {
-    
+
+    /// Dots-per-inch of the PDF file to create
     public var dpi: Double = 72.0
     
+    /// Width in inches of the PDF file to create
     public var width: Double = 8.5
     
+    /// Height in inches of the PDF file to create
     public var height: Double = 11.0
     
+    /// Margin in inches of the PDF file to create
     public var margin: Double = 1.0
-   
-    private let webView = WebView()
-    private let delegate = WebViewDelegate()
     
     private let logger = Logger(label: "webster", factory: StreamLogHandler.standardError)
     
@@ -32,6 +34,27 @@ public class Webster {
     
     public func render(source: URL, completionHandler: @escaping (Result<Data, Error>) -> Void) -> Void {
 
+        if #available(iOS 14.0, macCatalyst 14.0, *) {
+            
+            completionHandler(.failure(Errors.notImplemented))
+            return
+            
+            /*
+            let webView = WKWebView()
+            let delegate = WKWebViewDelegate(completionHandler: completionHandler)
+            
+            webView.navigationDelegate = delegate
+            
+            webView.load(URLRequest(url: source))
+            return
+            */
+        }
+          
+        // before iOS 14, MacOS 11
+        
+            let webView = WebView()
+            let delegate = WebViewDelegate()
+            
         /*
          
          Ideally we would just write directly to pdf_data but I am unsure
@@ -108,5 +131,6 @@ public class Webster {
         
         completionHandler(.success(pdf_data))
         return
+
     }
 }

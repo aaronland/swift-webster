@@ -1,10 +1,6 @@
 import Foundation
 import WebKit
 
-// All of this changes in OS X 10.16/11 when WebKit is formally replaced by
-// WKWebKit and WKWebKit.WebView finally gets a createPDF method...
-// https://developer.apple.com/documentation/webkit/wkwebview/3650490-createpdf
-
 class WebViewDelegate: NSObject, WebFrameLoadDelegate {
     
     public var dpi: CGFloat = 72.0
@@ -14,7 +10,6 @@ class WebViewDelegate: NSObject, WebFrameLoadDelegate {
     public var target: URL!
     
     private var destination = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-    
     private var filename: String = "webster.pdf"
     
     override init() {
