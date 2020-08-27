@@ -27,7 +27,8 @@ public class Webster {
     /// Margin in inches of the PDF file to create
     public var margin: Double = 1.0
     
-    private let logger = Logger(label: "webster", factory: StreamLogHandler.standardError)
+    /// swift-log instance for webster related logging
+    public var logger = Logger(label: "webster", factory: StreamLogHandler.standardError)
     
     private var rendering = false
     private var working = false
