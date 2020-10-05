@@ -11,6 +11,7 @@ public enum Status {
 public enum Errors: Error {
     case runLoopExit
     case notImplemented
+    case pdfOperationFailed
 }
 
 public class Webster {
@@ -96,39 +97,10 @@ public class Webster {
             let webView = WebView()
             let delegate = WebViewDelegate()
             
-            /*
-             
-             Ideally we would just write directly to pdf_data but this is
-             not possible with NSPrintOperation so instead we will create a
-             temporary file, write to that then read the data and remove the
-             temporary file on the way out. This is not ideal but it makes
-             for a cleaner interface for using this package and not assuming
-             that files are always been written (20200823/straup)
-             
-             */
-            
-            var pdf_data: Data!
-            
-            let temp_dir = URL(fileURLWithPath: NSTemporaryDirectory(),
-                               isDirectory: true)
-            
-            let fname = UUID().uuidString + ".pdf"
-            
-            let target = temp_dir.appendingPathComponent(fname)
-            
-            defer {
-                do {
-                    try FileManager.default.removeItem(at: target)
-                } catch (let error) {
-                    logger.warning("Failed to remove \(target.absoluteString), \(error.localizedDescription)")
-                }
-            }
-            
             delegate.dpi = CGFloat(dpi)
             delegate.width = CGFloat(width)
             delegate.height = CGFloat(height)
             delegate.margin = CGFloat(margin)
-            delegate.target = target
             
             webView.frameLoadDelegate = delegate
             
@@ -144,21 +116,18 @@ public class Webster {
             while rendering && runloop.run(mode: .default, before: .distantFuture) {
                 
             }
+            webView.frameLoadDelegate = nil
             
             if rendering {
                 completionHandler(.failure(Errors.runLoopExit))
                 return
             }
             
-            do {
-                try pdf_data = Data(contentsOf: target)
-            } catch (let error) {
-                completionHandler(.failure(error))
+            guard let pdfData = delegate.outputData else {
+                completionHandler(.failure(Errors.pdfOperationFailed))
                 return
             }
-            
-            completionHandler(.success(pdf_data))
-            return
+            completionHandler(.success(pdfData))
         }
         
     }

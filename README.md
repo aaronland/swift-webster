@@ -34,7 +34,7 @@ w.render(source: source_url, completionHandler: on_complete)
 
 ## Notes
 
-Prior to iOS 14 and MacOS 10.16 this package is uses [NSPrintOperation](https://developer.apple.com/documentation/appkit/nsprintoperation) to render a `WebView`. Ideally I would like `NSPrintOperation` to print directly to a `Data` instance but it's not possible to do this. Instead the `render` method creates a temporary file, writes to it, reads the data and removes the temporary file on exit. This introduces extra overhead but, hopefully, keeps the interface a little more agnostic about how the resultant PDF document is used.
+Prior to iOS 14 and MacOS 10.16 this package uses [NSPrintOperation](https://developer.apple.com/documentation/appkit/nsprintoperation) to render a `WebView`.
 
 _Really what we want is to be able to pass the `NSPrintOperation` method something like an abstract "writer" similar to the Go language [io.Writer](https://golang.org/pkg/io/) interface but this is not possible in Swift. Perhaps in future releases the [WKWebView.createPDF](https://developer.apple.com/documentation/webkit/wkwebview/3650490-createpdf) method will adopt the publish/subscribe model used in Apple's [Combine](https://developer.apple.com/documentation/combine) framework but today it does not._
 
