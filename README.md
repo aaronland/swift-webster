@@ -4,32 +4,28 @@ Swift package for generating a PDF file from a URL (rendered by WebKit).
 
 ## Example
 
-```
+```swift
 import Webster
 
 guard let source_url = URL(string: "https://example.com") else {
     fatalError("Invalid source URL.")
 }
 
-let w = Webster()
+let webster = Webster()
 
-w.dpi = 72.0
-w.width = 11.0
-w.height = 8.5
-w.margin = 0.5
+webster.dpi = 72.0
+webster.width = 11.0
+webster.height = 8.5
+webster.margin = 0.5
 
-on_complete = func(result: Result<Data, Error) -> Void {
-
-    if case .failure(let error) = result {
-        fatalError("Failed to generate PDF file, \(error.localizedDescription)")
-    }
-
-    if case .success(let data) = result {
-        // Do something with data here
+webster.render(source: source_url) { result in
+    switch result {
+    case .success(let data):
+        print("Genrated PDF: \(data)")
+    case .failure(let error):
+        print("Failed to generate PDF file, \(error)")
     }
 }
-
-w.render(source: source_url, completionHandler: on_complete)
 ```
 
 ## Notes
