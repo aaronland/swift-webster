@@ -23,6 +23,9 @@ public class Webster {
     
     /// Height in inches of the PDF file to create
     public var height: Double = 11.0
+
+    /// Size of page bleed in inches to add to all four sides of each page
+    public var bleed: Double = 0.0
     
     /// Margin in inches of the PDF file to create
     public var margin: Double = 1.0
@@ -125,8 +128,8 @@ public class Webster {
             }
             
             delegate.dpi = CGFloat(dpi)
-            delegate.width = CGFloat(width)
-            delegate.height = CGFloat(height)
+            delegate.width = CGFloat(width + (bleed * 2.0))
+            delegate.height = CGFloat(height + (bleed * 2.0))
             delegate.margin = CGFloat(margin)
             delegate.target = target
             
