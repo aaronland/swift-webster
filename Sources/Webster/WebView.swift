@@ -5,6 +5,7 @@ class WebViewDelegate: NSObject, WebFrameLoadDelegate {
     
     public var dpi: CGFloat = 72.0
     public var margin: CGFloat = 1.0
+    public var bleed: CGFloat = 0.0
     public var width: CGFloat = 6.0
     public var height: CGFloat = 9.0
     public var target: URL!
@@ -32,9 +33,12 @@ class WebViewDelegate: NSObject, WebFrameLoadDelegate {
         ]
                 
         let printInfo: NSPrintInfo = NSPrintInfo(dictionary: printOpts)
-        let baseMargin: CGFloat    = margin * dpi
+        let baseMargin: CGFloat = (margin + bleed) * dpi
         
-        printInfo.paperSize    = NSMakeSize(width * dpi, height * dpi)
+        let w = width + (bleed * 2.0)
+        let h = height + (bleed * 2.0)
+        
+        printInfo.paperSize    = NSMakeSize(w * dpi, h * dpi)
         printInfo.topMargin    = baseMargin
         printInfo.leftMargin   = baseMargin
         printInfo.rightMargin  = baseMargin
