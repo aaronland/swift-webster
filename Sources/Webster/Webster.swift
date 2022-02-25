@@ -77,6 +77,9 @@ public class Webster {
             NotificationCenter.default.post(name: Notification.Name("status"), object: Status.complete)
         }
         
+        // 10.16 -isms need more testing; not working as expected
+        // meaning methods don't fail but PDF files are not created
+        
         /*
         if #available(OSX 10.16, *) {
             

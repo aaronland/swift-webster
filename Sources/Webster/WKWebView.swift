@@ -19,6 +19,9 @@ public class WKWebViewDelegate: NSObject, WKNavigationDelegate {
         
         on_complete(.failure(WKWebViewDelegateErrors.notImplemented))
         
+        // 10.16 -isms need more testing; not working as expected
+        // meaning methods don't fail but PDF files are not created
+        
         /*
         if #available(OSX 10.16, *) {
             
