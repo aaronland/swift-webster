@@ -79,7 +79,7 @@ public class Webster {
         
         if #available(OSX 10.16, *) {
             
-
+            print("LOAD \(source)")
              let webView = WKWebView()
              let delegate = WKWebViewDelegate(completionHandler: completionHandler)
              

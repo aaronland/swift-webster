@@ -25,6 +25,7 @@ public class WKWebViewDelegate: NSObject, WKNavigationDelegate {
                 NotificationCenter.default.post(name: Notification.Name("status"), object: Status.complete)
             }
             
+            print("PDF IT UP, YO")
             let cfg = WKPDFConfiguration()
             webView.createPDF(configuration: cfg, completionHandler: on_complete)
 
