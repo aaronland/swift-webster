@@ -17,6 +17,9 @@ public class WKWebViewDelegate: NSObject, WKNavigationDelegate {
 
     public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         
+        on_complete(.failure(WKWebViewDelegateErrors.notImplemented))
+        
+        /*
         if #available(OSX 10.16, *) {
             
             NotificationCenter.default.post(name: Notification.Name("status"), object: Status.printing)
@@ -32,6 +35,6 @@ public class WKWebViewDelegate: NSObject, WKNavigationDelegate {
         } else {
             on_complete(.failure(WKWebViewDelegateErrors.notImplemented))
         }
-        
+        */
     }
 }

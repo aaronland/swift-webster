@@ -77,6 +77,7 @@ public class Webster {
             NotificationCenter.default.post(name: Notification.Name("status"), object: Status.complete)
         }
         
+        /*
         if #available(OSX 10.16, *) {
             
             print("LOAD \(source)")
@@ -89,7 +90,8 @@ public class Webster {
             return
             
         } else {
-            
+          */
+        
             // before iOS 14, MacOS 11
             
             let webView = WebView()
@@ -158,7 +160,7 @@ public class Webster {
             
             completionHandler(.success(pdf_data))
             return
-        }
+        /* } */
         
     }
 }
