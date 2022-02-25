@@ -25,10 +25,8 @@ public class WKWebViewDelegate: NSObject, WKNavigationDelegate {
                 NotificationCenter.default.post(name: Notification.Name("status"), object: Status.complete)
             }
             
-            on_complete(.failure(WKWebViewDelegateErrors.notImplemented))
-            
-            // let cfg = WKPDFConfiguration()
-            // webView.createPDF(cfg, on_complete)
+            let cfg = WKPDFConfiguration()
+            webView.createPDF(configuration: cfg, completionHandler: on_complete)
 
         } else {
             on_complete(.failure(WKWebViewDelegateErrors.notImplemented))

@@ -72,13 +72,14 @@ public class Webster {
     }
     
     private func renderAsync(source: URL, completionHandler: @escaping (Result<Data, Error>) -> Void) -> Void {
-                
+          
+        defer {
+            NotificationCenter.default.post(name: Notification.Name("status"), object: Status.complete)
+        }
+        
         if #available(OSX 10.16, *) {
             
-            completionHandler(.failure(Errors.notImplemented))
-            return
-            
-            /*
+
              let webView = WKWebView()
              let delegate = WKWebViewDelegate(completionHandler: completionHandler)
              
@@ -86,13 +87,8 @@ public class Webster {
              webView.load(URLRequest(url: source))
              
             return
-             */
             
         } else {
-            
-            defer {
-                NotificationCenter.default.post(name: Notification.Name("status"), object: Status.complete)
-            }
             
             // before iOS 14, MacOS 11
             
