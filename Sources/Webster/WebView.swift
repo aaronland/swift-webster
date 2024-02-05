@@ -24,14 +24,14 @@ class WebViewDelegate: NSObject, WebFrameLoadDelegate {
         defer {
             NotificationCenter.default.post(name: Notification.Name("status"), object: Status.printed)
         }
-                            
+        
         // https://developer.apple.com/documentation/appkit/nsprintoperation
         
         let printOpts: [NSPrintInfo.AttributeKey : Any] = [
             NSPrintInfo.AttributeKey.jobDisposition : NSPrintInfo.JobDisposition.save,
             NSPrintInfo.AttributeKey.jobSavingURL   : target!
         ]
-                
+        
         let printInfo: NSPrintInfo = NSPrintInfo(dictionary: printOpts)
         let baseMargin: CGFloat = (margin + bleed) * dpi
         
