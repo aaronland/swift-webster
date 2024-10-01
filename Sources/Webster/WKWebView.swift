@@ -17,12 +17,15 @@ public class WKWebViewDelegate: NSObject, WKNavigationDelegate {
 
     public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         
-        on_complete(.failure(WKWebViewDelegateErrors.notImplemented))
+        // on_complete(.failure(WKWebViewDelegateErrors.notImplemented))
         
         // 10.16 -isms need more testing; not working as expected
         // meaning methods don't fail but PDF files are not created
         
-        /*
+
+        NotificationCenter.default.post(name: Notification.Name("status"), object: Status.wtf)
+
+        
         if #available(OSX 10.16, *) {
             
             NotificationCenter.default.post(name: Notification.Name("status"), object: Status.printing)
@@ -38,6 +41,6 @@ public class WKWebViewDelegate: NSObject, WKNavigationDelegate {
         } else {
             on_complete(.failure(WKWebViewDelegateErrors.notImplemented))
         }
-        */
+        
     }
 }

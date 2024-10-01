@@ -6,6 +6,9 @@ public enum Status {
     case printing
     case printed
     case complete
+    case omg
+    case wtf
+    case bbq
 }
 
 public enum Errors: Error {
@@ -78,29 +81,33 @@ public class Webster {
     
     private func renderAsync(source: URL, completionHandler: @escaping (Result<Data, Error>) -> Void) -> Void {
           
-        defer {
-            NotificationCenter.default.post(name: Notification.Name("status"), object: Status.complete)
-        }
         
         // 10.16 -isms need more testing; not working as expected
         // meaning methods don't fail but PDF files are not created
         
-        /*
         if #available(OSX 10.16, *) {
             
-            print("LOAD \(source)")
+            self.logger.debug("Render \(source) with WKWebView")
+            
              let webView = WKWebView()
              let delegate = WKWebViewDelegate(completionHandler: completionHandler)
              
              webView.navigationDelegate = delegate
              webView.load(URLRequest(url: source))
-             
+
+            NotificationCenter.default.post(name: Notification.Name("status"), object: Status.omg)
+
             return
             
         } else {
-          */
-        
+              
+            defer {
+                NotificationCenter.default.post(name: Notification.Name("status"), object: Status.complete)
+            }
+            
             // before iOS 14, MacOS 11
+        
+            self.logger.debug("Render \(source) with WebView (deprecated)")
             
             let webView = WebView()
             let delegate = WebViewDelegate()
@@ -168,7 +175,7 @@ public class Webster {
             
             completionHandler(.success(pdf_data))
             return
-        /* } */
+        }
         
     }
 }
