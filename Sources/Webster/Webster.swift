@@ -14,6 +14,7 @@ public enum Status {
 public enum Errors: Error {
     case runLoopExit
     case notImplemented
+    case unknownDimensions
 }
 
 public class Webster {
@@ -82,7 +83,46 @@ public class Webster {
     
     private func renderAsync(source: URL, completionHandler: @escaping (Result<Data, Error>) -> Void) -> Void {
         
+        defer {
+            NotificationCenter.default.post(name: Notification.Name("status"), object: Status.complete)
+        }
         
+        let temp_dir = URL(fileURLWithPath: NSTemporaryDirectory(),
+                           isDirectory: true)
+        
+        let fname = UUID().uuidString + ".pdf"
+        
+        let target = temp_dir.appendingPathComponent(fname)
+        
+        defer {
+            do {
+                try FileManager.default.removeItem(at: target)
+            } catch (let error) {
+                logger.warning("Failed to remove \(target.absoluteString), \(error.localizedDescription)")
+            }
+        }
+        
+        let printOpts: [NSPrintInfo.AttributeKey : Any] = [
+            NSPrintInfo.AttributeKey.jobDisposition : NSPrintInfo.JobDisposition.save,
+            NSPrintInfo.AttributeKey.jobSavingURL   : target
+        ]
+              
+        //
+        
+        let printInfo: NSPrintInfo = NSPrintInfo(dictionary: printOpts)
+        let baseMargin: CGFloat = (margin + bleed) * dpi
+        
+        let w = width + (bleed * 2.0)
+        let h = height + (bleed * 2.0)
+        
+        printInfo.paperSize    = NSMakeSize(w * dpi, h * dpi)
+        printInfo.topMargin    = baseMargin
+        printInfo.leftMargin   = baseMargin
+        printInfo.rightMargin  = baseMargin
+        printInfo.bottomMargin = baseMargin
+       
+        rendering = true
+
         // 10.16 -isms need more testing; not working as expected
         // meaning methods don't fail but PDF files are not created
         
@@ -94,22 +134,14 @@ public class Webster {
             
             let webView = WKWebView()
 
-            let delegate = WKWebViewDelegate(completionHandler: completionHandler)
-            webView.navigationDelegate = delegate
+            let delegate = WKWebViewDelegate(printInfo: printInfo, completionHandler: completionHandler)
             
-            //webView.load(URLRequest(url: source))
+            webView.navigationDelegate = delegate
             webView.loadURL(url: source)
             
             NotificationCenter.default.post(name: Notification.Name("status"), object: Status.bbq)
-        
-            
-            return
             
         } else {
-            
-            defer {
-                NotificationCenter.default.post(name: Notification.Name("status"), object: Status.complete)
-            }
             
             // before iOS 14, MacOS 11
             
@@ -128,9 +160,7 @@ public class Webster {
              that files are always been written (20200823/straup)
              
              */
-            
-            var pdf_data: Data!
-            
+                        
             let temp_dir = URL(fileURLWithPath: NSTemporaryDirectory(),
                                isDirectory: true)
             
@@ -156,15 +186,18 @@ public class Webster {
             
             webView.frame = NSRect(x: 0.0, y: 0.0, width: 800, height: 640)
             webView.mainFrame.load(URLRequest(url: source))
-            
+        }
+        
+        NotificationCenter.default.post(name: Notification.Name("status"), object: Status.omg)
+
+        var pdf_data: Data!
+        
             // Blocking run loop is required to wait for the PDF to be generated.
-            
-            rendering = true
-            
+                        
             let runloop = RunLoop.current
             
             while rendering && runloop.run(mode: .default, before: .distantFuture) {
-                
+                logger.debug("Rendering")
             }
             
             if rendering {
@@ -181,7 +214,6 @@ public class Webster {
             
             completionHandler(.success(pdf_data))
             return
-        }
         
     }
 }
