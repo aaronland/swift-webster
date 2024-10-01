@@ -30,14 +30,14 @@ public class Webster {
     /// Margin in inches of the PDF file to create
     public var margin: Double = 1.0
     
-    /// swift-log instance for webster related logging
-    public var logger = Logger(label: "webster", factory: StreamLogHandler.standardError)
-    
+    private var logger = Logger(label: "webster")
     private var rendering = false
     private var working = false
     
     public init() {
      
+        LoggingSystem.bootstrap(StreamLogHandler.standardError)
+        
         NotificationCenter.default.addObserver(forName: Notification.Name(rawValue: "status"),
                                                object: nil,
                                                queue: .main) { (notification) in
@@ -54,6 +54,11 @@ public class Webster {
                 ()
             }
         }
+    }
+    
+    public func setLogLevel(level: Logger.Level) -> Void {
+        self.logger.logLevel = level
+        self.logger.debug("Log level set to \(level)")
     }
     
     public func render(source: URL, completionHandler: @escaping (Result<Data, Error>) -> Void) -> Void {
