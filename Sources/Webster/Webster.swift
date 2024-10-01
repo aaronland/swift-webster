@@ -26,7 +26,7 @@ public class Webster {
     
     /// Height in inches of the PDF file to create
     public var height: Double = 11.0
-
+    
     /// Size of page bleed in inches to add to all four sides of each page
     public var bleed: Double = 0.0
     
@@ -38,7 +38,7 @@ public class Webster {
     private var working = false
     
     public init() {
-     
+        
         LoggingSystem.bootstrap(StreamLogHandler.standardError)
         
         NotificationCenter.default.addObserver(forName: Notification.Name(rawValue: "status"),
@@ -65,7 +65,7 @@ public class Webster {
     }
     
     public func render(source: URL, completionHandler: @escaping (Result<Data, Error>) -> Void) -> Void {
-
+        
         working = true
         
         self.renderAsync(source: source, completionHandler: completionHandler)
@@ -73,40 +73,46 @@ public class Webster {
         let runloop = RunLoop.current
         
         while working && runloop.run(mode: .default, before: .distantFuture) {
-            
+            self.logger.debug("Working")
         }
         
+        self.logger.debug("Done rendering")
         return
     }
     
     private func renderAsync(source: URL, completionHandler: @escaping (Result<Data, Error>) -> Void) -> Void {
-          
+        
         
         // 10.16 -isms need more testing; not working as expected
         // meaning methods don't fail but PDF files are not created
+        
+        // https://www.artemnovichkov.com/blog/async-await-offline
         
         if #available(OSX 10.16, *) {
             
             self.logger.debug("Render \(source) with WKWebView")
             
-             let webView = WKWebView()
-             let delegate = WKWebViewDelegate(completionHandler: completionHandler)
-             
-             webView.navigationDelegate = delegate
-             webView.load(URLRequest(url: source))
+            let webView = WKWebView()
 
-            NotificationCenter.default.post(name: Notification.Name("status"), object: Status.omg)
-
+            let delegate = WKWebViewDelegate(completionHandler: completionHandler)
+            webView.navigationDelegate = delegate
+            
+            //webView.load(URLRequest(url: source))
+            webView.loadURL(url: source)
+            
+            NotificationCenter.default.post(name: Notification.Name("status"), object: Status.bbq)
+        
+            
             return
             
         } else {
-              
+            
             defer {
                 NotificationCenter.default.post(name: Notification.Name("status"), object: Status.complete)
             }
             
             // before iOS 14, MacOS 11
-        
+            
             self.logger.debug("Render \(source) with WebView (deprecated)")
             
             let webView = WebView()
@@ -156,7 +162,7 @@ public class Webster {
             rendering = true
             
             let runloop = RunLoop.current
-                                
+            
             while rendering && runloop.run(mode: .default, before: .distantFuture) {
                 
             }
