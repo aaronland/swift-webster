@@ -87,6 +87,28 @@ public class Webster {
             NotificationCenter.default.post(name: Notification.Name("status"), object: Status.complete)
         }
         
+        let pdf_delegate = true
+        
+        if #available(macOS 11.0, *) {
+            
+            if pdf_delegate {
+                                
+                self.logger.debug("Render \(source) with WKWebView (PDF)")
+                                
+                let webView = WKWebView()
+                let delegate = WKWebViewPDFDelegate(completionHandler: completionHandler)
+                webView.navigationDelegate = delegate
+                
+                webView.frame = NSRect(x: 0.0, y: 0.0, width: 800, height: 640)
+                
+                // webView.navigationDelegate = delegate
+                webView.loadURL(url: source)
+                
+                NotificationCenter.default.post(name: Notification.Name("status"), object: Status.bbq)
+                return
+            }
+        }
+        
         /*
          
          Ideally we would just write directly to pdf_data but this is
@@ -113,32 +135,15 @@ public class Webster {
         }
                 
         rendering = true
-
-        // 10.16 -isms need more testing; not working as expected
-        // meaning methods don't fail but PDF files are not created
         
         // https://www.artemnovichkov.com/blog/async-await-offline
                 
         if #available(macOS 11.0, *){
                     
-            self.logger.debug("Render \(source) with WKWebView")
-            
-            /*
-            let webView = WKWebView()
-            let delegate = WKWebViewPDFDelegate(completionHandler: completionHandler)
-            webView.navigationDelegate = delegate
-            
-            webView.frame = NSRect(x: 0.0, y: 0.0, width: 800, height: 640)
-            
-            // webView.navigationDelegate = delegate
-            webView.loadURL(url: source)
-            
-            NotificationCenter.default.post(name: Notification.Name("status"), object: Status.bbq)
-            return
-            */
+            self.logger.debug("Render \(source) with WKWebView (NSPrint)")
             
             let webView = WKWebView()
-            let delegate = WKWebViewDelegate()
+            let delegate = WKWebViewNSPrintDelegate()
             
             delegate.dpi = CGFloat(dpi)
             delegate.width = CGFloat(width + (bleed * 2.0))
@@ -178,7 +183,6 @@ public class Webster {
         
         NotificationCenter.default.post(name: Notification.Name("status"), object: Status.omg)
 
-        logger.debug("WOO")
         var pdf_data: Data!
         
             // Blocking run loop is required to wait for the PDF to be generated.
@@ -190,12 +194,9 @@ public class Webster {
             }
             
             if rendering {
-                logger.warning("WUT")
                 completionHandler(.failure(Errors.runLoopExit))
                 return
             }
-            
-        logger.debug("OKAY PDF")
         
             do {
                 try pdf_data = Data(contentsOf: target)
