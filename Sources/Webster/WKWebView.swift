@@ -1,20 +1,6 @@
 import Foundation
 import WebKit
 
-extension WKWebView {
-    
-    func loadURL(url: URL) {
-        
-        let request = URLRequest(url: url)
-        self.load(request)
-        
-        while (self.isLoading) {
-            RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.1))
-        }
-        
-    }
-}
-
 public enum WKWebViewDelegateErrors: Error {
     case notImplemented
 }
@@ -61,7 +47,6 @@ public class WKWebViewDelegate: NSObject, WKNavigationDelegate {
         NotificationCenter.default.post(name: Notification.Name("status"), object: Status.printing)
         
         defer {
-            print("DEFER")
             NotificationCenter.default.post(name: Notification.Name("status"), object: Status.printed)
             // NotificationCenter.default.post(name: Notification.Name("status"), object: Status.complete)
         }
@@ -71,7 +56,7 @@ public class WKWebViewDelegate: NSObject, WKNavigationDelegate {
             NSPrintInfo.AttributeKey.jobSavingURL   : target!
         ]
          
-        print("TARGET \(target)")
+        // print("TARGET \(target)")
         
         let printInfo: NSPrintInfo = NSPrintInfo(dictionary: printOpts)
         let baseMargin: CGFloat = (margin + bleed) * dpi
@@ -84,13 +69,35 @@ public class WKWebViewDelegate: NSObject, WKNavigationDelegate {
         printInfo.leftMargin   = baseMargin
         printInfo.rightMargin  = baseMargin
         printInfo.bottomMargin = baseMargin
-
-        let printOp: NSPrintOperation = NSPrintOperation(view: webView, printInfo: printInfo)
+                
+        // This just runs() forever with no feedback (below):
         // let printOp = webView.printOperation(with: printInfo)
         
+        // This panics:
+        // Terminating app due to uncaught exception 'NSInvalidArgumentException', reason: '-[WKWebView webFrame]: unrecognized selector sent to instance 0x7fe3a3a06550'
+        // But anyway, webFrame is deprecated:
+        // https://developer.apple.com/documentation/webkit/domdocument/1536374-webframe
+        // let printOp: NSPrintOperation = NSPrintOperation(view: webView.webFrame.frameView.documentView, printInfo: printInfo)
+        
+        // This just prints a single blank page
+        let printOp: NSPrintOperation = NSPrintOperation(view: webView, printInfo: printInfo)
+                
         printOp.showsPrintPanel = false
         printOp.showsProgressPanel = false
+        
+        // printOp.view?.frame = NSRect(x: 0.0, y: 0.0, width: 300.0, height: 300.0)
+        
+        print("RUN \(printOp.view?.frame)")
+        // https://developer.apple.com/documentation/appkit/nsprintoperation/1532039-runoperation
         printOp.run()
+                
+        // OMGWTF...
+        // https://www.hackingwithswift.com/forums/macos/printing-almost-works-but/27196
+        // https://forums.developer.apple.com/forums/thread/705138 <-- maybe this?
+        
+        //printOp.runModal(for: webView.window, delegate: nil, didRun: nil, contextInfo: nil)
+        
+        print("RAN")
         return
     }
 }

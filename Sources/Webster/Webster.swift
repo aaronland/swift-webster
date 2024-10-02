@@ -87,14 +87,22 @@ public class Webster {
             NotificationCenter.default.post(name: Notification.Name("status"), object: Status.complete)
         }
         
+        /*
+         
+         Ideally we would just write directly to pdf_data but this is
+         not possible with NSPrintOperation so instead we will create a
+         temporary file, write to that then read the data and remove the
+         temporary file on the way out. This is not ideal but it makes
+         for a cleaner interface for using this package and not assuming
+         that files are always been written (20200823/straup)
+         
+         */
+        
         let temp_dir = URL(fileURLWithPath: NSTemporaryDirectory(),
                            isDirectory: true)
         
         let fname = UUID().uuidString + ".pdf"
         let target = temp_dir.appendingPathComponent(fname)
-       
-        // var destination = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        // var target: String = "webster.pdf"
         
         defer {
             do {
@@ -103,28 +111,7 @@ public class Webster {
                 logger.warning("Failed to remove \(target.absoluteString), \(error.localizedDescription)")
             }
         }
-        
-        /*
-        let printOpts: [NSPrintInfo.AttributeKey : Any] = [
-            NSPrintInfo.AttributeKey.jobDisposition : NSPrintInfo.JobDisposition.save,
-            NSPrintInfo.AttributeKey.jobSavingURL   : target
-        ]
-              
-        //
-        
-        let printInfo: NSPrintInfo = NSPrintInfo(dictionary: printOpts)
-        let baseMargin: CGFloat = (margin + bleed) * dpi
-        
-        let w = width + (bleed * 2.0)
-        let h = height + (bleed * 2.0)
-        
-        printInfo.paperSize    = NSMakeSize(w * dpi, h * dpi)
-        printInfo.topMargin    = baseMargin
-        printInfo.leftMargin   = baseMargin
-        printInfo.rightMargin  = baseMargin
-        printInfo.bottomMargin = baseMargin
-       */
-        
+                
         rendering = true
 
         // 10.16 -isms need more testing; not working as expected
@@ -161,7 +148,9 @@ public class Webster {
             
             webView.navigationDelegate = delegate
             
-            webView.frame = NSRect(x: 0.0, y: 0.0, width: 800, height: 640)            
+            webView.frame = NSRect(x: 0.0, y: 0.0, width: 800, height: 640)
+            
+            self.logger.debug("Load URL")
             webView.loadURL(url: source)
             
         } else {
@@ -173,32 +162,6 @@ public class Webster {
             let webView = WebView()
             let delegate = WebViewDelegate()
             
-            /*
-             
-             Ideally we would just write directly to pdf_data but this is
-             not possible with NSPrintOperation so instead we will create a
-             temporary file, write to that then read the data and remove the
-             temporary file on the way out. This is not ideal but it makes
-             for a cleaner interface for using this package and not assuming
-             that files are always been written (20200823/straup)
-             
-             */
-                        
-            let temp_dir = URL(fileURLWithPath: NSTemporaryDirectory(),
-                               isDirectory: true)
-            
-            let fname = UUID().uuidString + ".pdf"
-            
-            let target = temp_dir.appendingPathComponent(fname)
-            
-            defer {
-                do {
-                    try FileManager.default.removeItem(at: target)
-                } catch (let error) {
-                    logger.warning("Failed to remove \(target.absoluteString), \(error.localizedDescription)")
-                }
-            }
-            
             delegate.dpi = CGFloat(dpi)
             delegate.width = CGFloat(width + (bleed * 2.0))
             delegate.height = CGFloat(height + (bleed * 2.0))
@@ -209,6 +172,8 @@ public class Webster {
             
             webView.frame = NSRect(x: 0.0, y: 0.0, width: 800, height: 640)
             webView.mainFrame.load(URLRequest(url: source))
+            
+            // webView.mainFram
         }
         
         NotificationCenter.default.post(name: Notification.Name("status"), object: Status.omg)
