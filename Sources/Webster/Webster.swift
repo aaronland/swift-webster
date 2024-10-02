@@ -128,15 +128,27 @@ public class Webster {
         
         // https://www.artemnovichkov.com/blog/async-await-offline
         
-        if #available(OSX 10.16, *) {
+        var pooface = false
+        
+    
+        
+        if pooface {
             
             self.logger.debug("Render \(source) with WKWebView")
             
             let webView = WKWebView()
 
-            let delegate = WKWebViewDelegate(printInfo: printInfo, completionHandler: completionHandler)
+            if #available(macOS 11.0, *) {
+                let delegate = WKWebViewDelegate(printInfo: printInfo, completionHandler: completionHandler)
+                webView.navigationDelegate = delegate
+
+            } else {
+                // Fallback on earlier versions
+            }
             
-            webView.navigationDelegate = delegate
+            webView.frame = NSRect(x: 0.0, y: 0.0, width: 800, height: 640)
+            
+            // webView.navigationDelegate = delegate
             webView.loadURL(url: source)
             
             NotificationCenter.default.post(name: Notification.Name("status"), object: Status.bbq)
@@ -148,7 +160,7 @@ public class Webster {
             self.logger.debug("Render \(source) with WebView (deprecated)")
             
             let webView = WebView()
-            let delegate = WebViewDelegate()
+            let delegate = WebViewDelegate(printInfo: printInfo)
             
             /*
              
@@ -176,11 +188,13 @@ public class Webster {
                 }
             }
             
+            /*
             delegate.dpi = CGFloat(dpi)
             delegate.width = CGFloat(width + (bleed * 2.0))
             delegate.height = CGFloat(height + (bleed * 2.0))
             delegate.margin = CGFloat(margin)
             delegate.target = target
+            */
             
             webView.frameLoadDelegate = delegate
             
@@ -190,6 +204,7 @@ public class Webster {
         
         NotificationCenter.default.post(name: Notification.Name("status"), object: Status.omg)
 
+        logger.debug("WOO")
         var pdf_data: Data!
         
             // Blocking run loop is required to wait for the PDF to be generated.
@@ -201,10 +216,13 @@ public class Webster {
             }
             
             if rendering {
+                logger.warning("WUT")
                 completionHandler(.failure(Errors.runLoopExit))
                 return
             }
             
+        logger.debug("OKAY PDF")
+        
             do {
                 try pdf_data = Data(contentsOf: target)
             } catch (let error) {

@@ -13,8 +13,11 @@ class WebViewDelegate: NSObject, WebFrameLoadDelegate {
     private var destination = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
     private var filename: String = "webster.pdf"
     
-    override init() {
+    let print_info: NSPrintInfo
+    
+    init(printInfo: NSPrintInfo) {
         target = destination.appendingPathComponent(filename)
+        print_info = printInfo
     }
     
     func webView(_ sender: WebView!, didFinishLoadFor frame: WebFrame!) {
@@ -27,6 +30,7 @@ class WebViewDelegate: NSObject, WebFrameLoadDelegate {
                             
         // https://developer.apple.com/documentation/appkit/nsprintoperation
         
+        /*
         let printOpts: [NSPrintInfo.AttributeKey : Any] = [
             NSPrintInfo.AttributeKey.jobDisposition : NSPrintInfo.JobDisposition.save,
             NSPrintInfo.AttributeKey.jobSavingURL   : target!
@@ -43,11 +47,15 @@ class WebViewDelegate: NSObject, WebFrameLoadDelegate {
         printInfo.leftMargin   = baseMargin
         printInfo.rightMargin  = baseMargin
         printInfo.bottomMargin = baseMargin
+        */
         
-        let printOp: NSPrintOperation = NSPrintOperation(view: sender.mainFrame.frameView.documentView, printInfo: printInfo)
+        let printOp: NSPrintOperation = NSPrintOperation(view: sender.mainFrame.frameView.documentView, printInfo: print_info)
         
         printOp.showsPrintPanel = false
         printOp.showsProgressPanel = false
+        
+        print("RUNNNNNN")
         printOp.run()
+        print("DONNNNNE")
     }
 }
