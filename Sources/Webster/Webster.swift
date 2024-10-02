@@ -91,8 +91,10 @@ public class Webster {
                            isDirectory: true)
         
         let fname = UUID().uuidString + ".pdf"
-        
         let target = temp_dir.appendingPathComponent(fname)
+       
+        // var destination = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        // var target: String = "webster.pdf"
         
         defer {
             do {
@@ -102,6 +104,7 @@ public class Webster {
             }
         }
         
+        /*
         let printOpts: [NSPrintInfo.AttributeKey : Any] = [
             NSPrintInfo.AttributeKey.jobDisposition : NSPrintInfo.JobDisposition.save,
             NSPrintInfo.AttributeKey.jobSavingURL   : target
@@ -120,31 +123,23 @@ public class Webster {
         printInfo.leftMargin   = baseMargin
         printInfo.rightMargin  = baseMargin
         printInfo.bottomMargin = baseMargin
-       
+       */
+        
         rendering = true
 
         // 10.16 -isms need more testing; not working as expected
         // meaning methods don't fail but PDF files are not created
         
         // https://www.artemnovichkov.com/blog/async-await-offline
-        
-        var pooface = false
-        
-    
-        
-        if pooface {
-            
+                
+        if #available(macOS 11.0, *){
+                    
             self.logger.debug("Render \(source) with WKWebView")
             
+            /*
             let webView = WKWebView()
-
-            if #available(macOS 11.0, *) {
-                let delegate = WKWebViewDelegate(printInfo: printInfo, completionHandler: completionHandler)
-                webView.navigationDelegate = delegate
-
-            } else {
-                // Fallback on earlier versions
-            }
+            let delegate = WKWebViewPDFDelegate(completionHandler: completionHandler)
+            webView.navigationDelegate = delegate
             
             webView.frame = NSRect(x: 0.0, y: 0.0, width: 800, height: 640)
             
@@ -152,6 +147,22 @@ public class Webster {
             webView.loadURL(url: source)
             
             NotificationCenter.default.post(name: Notification.Name("status"), object: Status.bbq)
+            return
+            */
+            
+            let webView = WKWebView()
+            let delegate = WKWebViewDelegate()
+            
+            delegate.dpi = CGFloat(dpi)
+            delegate.width = CGFloat(width + (bleed * 2.0))
+            delegate.height = CGFloat(height + (bleed * 2.0))
+            delegate.margin = CGFloat(margin)
+            delegate.target = target
+            
+            webView.navigationDelegate = delegate
+            
+            webView.frame = NSRect(x: 0.0, y: 0.0, width: 800, height: 640)            
+            webView.loadURL(url: source)
             
         } else {
             
@@ -160,7 +171,7 @@ public class Webster {
             self.logger.debug("Render \(source) with WebView (deprecated)")
             
             let webView = WebView()
-            let delegate = WebViewDelegate(printInfo: printInfo)
+            let delegate = WebViewDelegate()
             
             /*
              
@@ -188,13 +199,11 @@ public class Webster {
                 }
             }
             
-            /*
             delegate.dpi = CGFloat(dpi)
             delegate.width = CGFloat(width + (bleed * 2.0))
             delegate.height = CGFloat(height + (bleed * 2.0))
             delegate.margin = CGFloat(margin)
             delegate.target = target
-            */
             
             webView.frameLoadDelegate = delegate
             
