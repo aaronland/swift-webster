@@ -34,9 +34,13 @@ w.render(source: source_url, completionHandler: on_complete)
 
 ## Notes
 
+### This package uses deprecated APIs
+
 This package uses deprecated APIs notably [WebView](https://developer.apple.com/documentation/webkit/webview).
 
 Specifically, this package is uses [NSPrintOperation](https://developer.apple.com/documentation/appkit/nsprintoperation) to render a `WebView`. Ideally I would like `NSPrintOperation` to print directly to a `Data` instance but it's not possible to do this. Instead the `render` method creates a temporary file, writes to it, reads the data and removes the temporary file on exit. This introduces extra overhead but, hopefully, keeps the interface a little more agnostic about how the resultant PDF document is used.
+
+### There is a WKWebView branch
 
 There is a [wkwebview](https://github.com/aaronland/swift-webster/tree/wkwebview) branch that uses the newer [WKWebView](https://developer.apple.com/documentation/webkit/wkwebview) APIs however it does not work. I can not determine for sure if the problem is with my code or with Apple's MacOS APIs. It seems like the latter but I would be happy for it to be the former. This branch has two separate delegates, neither of which work as desired.
 
