@@ -34,9 +34,17 @@ w.render(source: source_url, completionHandler: on_complete)
 
 ## Notes
 
-Prior to iOS 14 and MacOS 10.16 this package is uses [NSPrintOperation](https://developer.apple.com/documentation/appkit/nsprintoperation) to render a `WebView`. Ideally I would like `NSPrintOperation` to print directly to a `Data` instance but it's not possible to do this. Instead the `render` method creates a temporary file, writes to it, reads the data and removes the temporary file on exit. This introduces extra overhead but, hopefully, keeps the interface a little more agnostic about how the resultant PDF document is used.
+This package uses deprecated APIs notably [WebView](https://developer.apple.com/documentation/webkit/webview).
 
-_Really what we want is to be able to pass the `NSPrintOperation` method something like an abstract "writer" similar to the Go language [io.Writer](https://golang.org/pkg/io/) interface but this is not possible in Swift. Perhaps in future releases the [WKWebView.createPDF](https://developer.apple.com/documentation/webkit/wkwebview/3650490-createpdf) method will adopt the publish/subscribe model used in Apple's [Combine](https://developer.apple.com/documentation/combine) framework but today it does not._
+Specifically, this package is uses [NSPrintOperation](https://developer.apple.com/documentation/appkit/nsprintoperation) to render a `WebView`. Ideally I would like `NSPrintOperation` to print directly to a `Data` instance but it's not possible to do this. Instead the `render` method creates a temporary file, writes to it, reads the data and removes the temporary file on exit. This introduces extra overhead but, hopefully, keeps the interface a little more agnostic about how the resultant PDF document is used.
+
+There is a [wkwebview](https://github.com/aaronland/swift-webster/tree/wkwebview) branch that uses the newer [WKWebView](https://developer.apple.com/documentation/webkit/wkwebview) APIs however it does not work. I can not determine for sure if the problem is with my code or with Apple's MacOS APIs. It seems like the latter but I would be happy for it to be the former. This branch has two separate delegates, neither of which work as desired.
+
+The [first](https://github.com/aaronland/swift-webster/blob/wkwebview/Sources/Webster/WKWebViewNSPrintDelegate.swift) calls `webView.printOperation` as recommended by the documentation. However when the `printOperation.run()` method is invoked it never completes. Apparently, I am supposed to invoke the `printOperation.runModal` method but that depends on a `NSWindow` instance which is not present in the final `webView` instance.
+
+The [second](https://github.com/aaronland/swift-webster/blob/wkwebview/Sources/Webster/WKWebViewPDFDelegate.swift) calls `webView.createPDF` as recommended by the documentation but this produces a single PDF file the size of the final web page's dimensions. Maybe this is the expected behaviour?
+
+Any pointers or suggestions for how to address either of these issues would be welcome.
 
 ## Credits
 
