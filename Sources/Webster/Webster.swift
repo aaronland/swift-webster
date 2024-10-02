@@ -87,24 +87,27 @@ public class Webster {
             NotificationCenter.default.post(name: Notification.Name("status"), object: Status.complete)
         }
         
+        self.logger.debug("Render \(source)")
+        
         let pdf_delegate = true
+        
+        // WKWebKit things that don't work 1/2
+        // This "works" in that it will create a PDF of a WKWebKit
+        // but it will be a single-page PDF whose dimension match
+        // those of the document (web page) window.
         
         if #available(macOS 11.0, *) {
             
             if pdf_delegate {
-                                
+                
                 self.logger.debug("Render \(source) with WKWebView (PDF)")
-                                
+                
                 let webView = WKWebView()
                 let delegate = WKWebViewPDFDelegate(completionHandler: completionHandler)
                 webView.navigationDelegate = delegate
                 
                 webView.frame = NSRect(x: 0.0, y: 0.0, width: 800, height: 640)
-                
-                // webView.navigationDelegate = delegate
                 webView.loadURL(url: source)
-                
-                NotificationCenter.default.post(name: Notification.Name("status"), object: Status.bbq)
                 return
             }
         }
@@ -133,13 +136,18 @@ public class Webster {
                 logger.warning("Failed to remove \(target.absoluteString), \(error.localizedDescription)")
             }
         }
-                
+        
         rendering = true
         
-        // https://www.artemnovichkov.com/blog/async-await-offline
-                
+        // WKWebKit things that don't work 2/2
+        // If this is run with webView.printOperation(with: printInfo) as the
+        // documents suggest you do then the (printOperation) run() method
+        // never completes. If this is run with NSPrintOperation(view: webView, printInfo: printInfo)
+        // then the run() method completes successfully but produces a blank
+        // PDF file.
+        
         if #available(macOS 11.0, *){
-                    
+            
             self.logger.debug("Render \(source) with WKWebView (NSPrint)")
             
             let webView = WKWebView()
@@ -154,12 +162,11 @@ public class Webster {
             webView.navigationDelegate = delegate
             
             webView.frame = NSRect(x: 0.0, y: 0.0, width: 800, height: 640)
-            
-            self.logger.debug("Load URL")
             webView.loadURL(url: source)
             
         } else {
             
+            // This is the only thing that works reliably
             // before iOS 14, MacOS 11
             
             self.logger.debug("Render \(source) with WebView (deprecated)")
@@ -181,32 +188,30 @@ public class Webster {
             // webView.mainFram
         }
         
-        NotificationCenter.default.post(name: Notification.Name("status"), object: Status.omg)
-
+        // Blocking run loop is required to wait for the PDF to be generated.
+        
         var pdf_data: Data!
         
-            // Blocking run loop is required to wait for the PDF to be generated.
-                        
-            let runloop = RunLoop.current
-            
-            while rendering && runloop.run(mode: .default, before: .distantFuture) {
-                logger.debug("Rendering")
-            }
-            
-            if rendering {
-                completionHandler(.failure(Errors.runLoopExit))
-                return
-            }
+        let runloop = RunLoop.current
         
-            do {
-                try pdf_data = Data(contentsOf: target)
-            } catch (let error) {
-                completionHandler(.failure(error))
-                return
-            }
-            
-            completionHandler(.success(pdf_data))
+        while rendering && runloop.run(mode: .default, before: .distantFuture) {
+            logger.debug("Rendering")
+        }
+        
+        if rendering {
+            completionHandler(.failure(Errors.runLoopExit))
             return
+        }
+        
+        do {
+            try pdf_data = Data(contentsOf: target)
+        } catch (let error) {
+            completionHandler(.failure(error))
+            return
+        }
+        
+        completionHandler(.success(pdf_data))
+        return
         
     }
 }

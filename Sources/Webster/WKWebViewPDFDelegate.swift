@@ -27,7 +27,7 @@ public class WKWebViewPDFDelegate: NSObject, WKNavigationDelegate {
     }
     
     // https://developer.apple.com/documentation/webkit/wkwebview/3650490-createpdf
-
+    
     
     public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         
@@ -37,7 +37,10 @@ public class WKWebViewPDFDelegate: NSObject, WKNavigationDelegate {
             NotificationCenter.default.post(name: Notification.Name("status"), object: Status.printed)
         }
         
+        // This is necessary because webView on MacOS has no "scrollView" properties...
+        
         webView.evaluateJavaScript("document.readyState", completionHandler: { (complete, error) in
+            
             if complete == nil {
                 return
             }
@@ -47,7 +50,7 @@ public class WKWebViewPDFDelegate: NSObject, WKNavigationDelegate {
             }
             
             webView.evaluateJavaScript("document.body.scrollHeight", completionHandler: { (height, error) in
-            
+                
                 if error != nil {
                     return
                 }
@@ -55,9 +58,9 @@ public class WKWebViewPDFDelegate: NSObject, WKNavigationDelegate {
                 guard let h = height as? CGFloat else {
                     return
                 }
-
+                
                 webView.evaluateJavaScript("document.body.scrollWidth", completionHandler: { (width, error) in
-
+                    
                     if error != nil {
                         return
                     }
@@ -65,31 +68,29 @@ public class WKWebViewPDFDelegate: NSObject, WKNavigationDelegate {
                     guard let w = width as? CGFloat else {
                         return
                     }
-                       
+                    
                     // This works but prints a single page with these dimensions
                     // so... "works"
                     
                     let cfg = WKPDFConfiguration()
                     cfg.rect = .init(origin: .zero, size: .init(width: w, height: h))
-
-                        webView.createPDF(configuration: cfg){ result in
-                            switch result {
-                            case .success(let data):
-                                print("DATA")
-                                self.on_complete(.success(data))
-                            case .failure(let err):
-                                print("SAD 3 \(err)")
-                                self.on_complete(.failure(err))
-                            }
+                    
+                    webView.createPDF(configuration: cfg){ result in
+                        switch result {
+                        case .success(let data):
+                            self.on_complete(.success(data))
+                        case .failure(let err):
+                            self.on_complete(.failure(err))
                         }
-                    })
+                    }
                 })
+            })
             
             
         })
         
         
-
-
+        
+        
     }
 }

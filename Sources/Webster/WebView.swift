@@ -1,6 +1,9 @@
 import Foundation
 import WebKit
 
+// This has been deprecated by Apple but it still the only thing that
+// works reliably on MacOS...
+
 class WebViewDelegate: NSObject, WebFrameLoadDelegate {
     
     public var dpi: CGFloat = 72.0
