@@ -1,0 +1,119 @@
+import Foundation
+import ArgumentParser
+import Webster
+import Logging
+
+public enum Errors: Error {
+    case invalidURL
+}
+
+private func newURL(url: String) -> Result<URL, Error> {
+    
+    guard var u = URL(string: url) else {
+        return .failure(Errors.invalidURL)
+    }
+    
+    
+    if u.scheme == nil {
+        
+        let new_url = "file://" + u.absoluteString
+        
+        guard let new_u = URL(string: new_url) else {
+            return .failure(Errors.invalidURL)
+        }
+        
+        u = new_u
+    }
+    
+    return .success(u)
+}
+
+struct Print: AsyncParsableCommand {
+    
+    static let configuration = CommandConfiguration(abstract: "...")
+    
+    
+    @Option(help: "The DPI (dots per inch) of your output document.")
+    var dpi: Double = 72.0
+    
+    @Option(help: "The width (in inches) of your document.")
+    var width: Double = 8.5
+    
+    @Option(help: "The height (in inches) of your document.")
+    var height: Double = 11.0
+    
+    @Option(help: "The margin (in inches) for each page in your document.")
+    var margin: Double = 1.0
+    
+    @Option(help: "The bleed (in inches) for each page in your document.")
+    var bleed: Double = 0.0
+    
+    @Option(help: "Enable verbose (debug) logging.")
+    var verbose: Bool = false
+    
+    @Argument(help: "The URL you want to generate a PDF from.")
+    var source: String
+    
+    @Argument(help: "The path where your PDF document will be created.")
+    var destination: String
+    
+    func run() async throws {
+        
+        var logger = Logger(label: "org.aaronland.webster")
+
+        if verbose {
+            logger.logLevel = .debug
+        }
+        
+        var source_url: URL!
+        var target_url: URL!
+        
+        let source_result = newURL(url: source)
+        
+        switch source_result {
+        case .failure(let error):
+            logger.error("Failed to derive source URL, \(error)")
+            throw error
+        case .success(let u):
+            source_url = u
+        }
+        
+        let target_result = newURL(url: destination)
+        
+        switch target_result {
+        case .failure(let error):
+            logger.error("Failed to derive target URL, \(error)")
+            throw error
+        case .success(let u):
+            target_url = u
+        }
+        
+        logger.debug("Print \(source_url!.absoluteString) to \(target_url!.absoluteString)")
+        
+        let w = Webster(logger)
+        
+        w.dpi = dpi
+        w.width = width
+        w.height = height
+        w.margin = margin
+        w.bleed = bleed
+        
+        func on_complete(result: Result<Data, Error>) -> Void {
+            
+            switch result {
+            case .failure(let error):
+                logger.error("Failed to generate PDF file, \(error.localizedDescription)")
+            case .success (let data):
+                
+                do {
+                    try data.write(to: target_url)
+                } catch (let error) {
+                    logger.error("Failed to save PDF file, \(error.localizedDescription)")
+                }
+            }
+        }
+        
+        await w.render(source: source_url, completionHandler: on_complete)
+    }
+}
+

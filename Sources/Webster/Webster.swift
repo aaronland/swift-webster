@@ -43,23 +43,23 @@ public class Webster {
                 
         NotificationCenter.default.addObserver(forName: Notification.Name(rawValue: "status"),
                                                object: nil,
-                                               queue: .main) { (notification) in
+                                               queue: .main) { [self] (notification) in
             
             let status = notification.object as! Status
-            self.logger?.debug("Received status notification: \(status)")
+            logger?.debug("Received status notification: \(status)")
             
             switch status {
             case Status.complete:
-                self.working = false
+                working = false
             case Status.printed:
-                self.rendering = false
+                rendering = false
             default:
                 ()
             }
         }
     }
     
-    public func render(source: URL, completionHandler: @escaping (Result<Data, Error>) -> Void) -> Void {
+    @MainActor public func render(source: URL, completionHandler: @escaping (Result<Data, Error>) -> Void) -> Void {
         
         working = true
         
@@ -75,7 +75,7 @@ public class Webster {
         return
     }
     
-    private func renderAsync(source: URL, completionHandler: @escaping (Result<Data, Error>) -> Void) -> Void {
+    @MainActor private func renderAsync(source: URL, completionHandler: @escaping (Result<Data, Error>) -> Void) -> Void {
         
         defer {
             NotificationCenter.default.post(name: Notification.Name("status"), object: Status.complete)

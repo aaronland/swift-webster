@@ -12,8 +12,8 @@ let package = Package(
             targets: ["Webster"]),
     ],
     dependencies: [
-
         .package(url: "https://github.com/apple/swift-log.git", from: "1.10.1"),
+        .package(url: "https://github.com/apple/swift-argument-parser", from: "1.7.0"),
     ],
     targets: [
         .target(
@@ -21,5 +21,13 @@ let package = Package(
             dependencies: [
                 .product(name:"Logging", package:"swift-log"),
             ]),
+        .executableTarget(
+                    name: "webster-cli",
+                    dependencies: [
+                        "Webster",
+                        .product(name: "ArgumentParser", package: "swift-argument-parser"),
+                        .product(name: "Logging", package: "swift-log"),
+                    ]
+                ),
     ]
 )
