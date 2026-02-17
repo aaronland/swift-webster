@@ -17,6 +17,7 @@ public enum Errors: Error {
     case unknownDimensions
 }
 
+@available(macOS 11.0, *)
 public class Webster {
     
     /// Dots-per-inch of the PDF file to create
@@ -34,20 +35,18 @@ public class Webster {
     /// Margin in inches of the PDF file to create
     public var margin: Double = 1.0
     
-    private var logger = Logger(label: "webster")
+    private var logger: Logger?
     private var rendering = false
     private var working = false
     
-    public init() {
-        
-        LoggingSystem.bootstrap(StreamLogHandler.standardError)
-        
+    public init(_ logger: Logger? = nil) {
+                
         NotificationCenter.default.addObserver(forName: Notification.Name(rawValue: "status"),
                                                object: nil,
                                                queue: .main) { (notification) in
             
             let status = notification.object as! Status
-            self.logger.debug("Received status notification: \(status)")
+            self.logger?.debug("Received status notification: \(status)")
             
             switch status {
             case Status.complete:
@@ -60,11 +59,6 @@ public class Webster {
         }
     }
     
-    public func setLogLevel(level: Logger.Level) -> Void {
-        self.logger.logLevel = level
-        self.logger.debug("Log level set to \(level)")
-    }
-    
     public func render(source: URL, completionHandler: @escaping (Result<Data, Error>) -> Void) -> Void {
         
         working = true
@@ -74,10 +68,10 @@ public class Webster {
         let runloop = RunLoop.current
         
         while working && runloop.run(mode: .default, before: .distantFuture) {
-            self.logger.debug("Working")
+            self.logger?.debug("Working")
         }
         
-        self.logger.debug("Done rendering")
+        self.logger?.debug("Done rendering")
         return
     }
     
@@ -87,131 +81,14 @@ public class Webster {
             NotificationCenter.default.post(name: Notification.Name("status"), object: Status.complete)
         }
         
-        self.logger.debug("Render \(source)")
+        self.logger?.debug("Render \(source)")
         
-        let pdf_delegate = true
+        let webView = WKWebView()
+        let delegate = WKWebViewPDFDelegate(completionHandler: completionHandler)
+        webView.navigationDelegate = delegate
         
-        // WKWebKit things that don't work 1/2
-        // This "works" in that it will create a PDF of a WKWebKit
-        // but it will be a single-page PDF whose dimension match
-        // those of the document (web page) window.
-        
-        if #available(macOS 11.0, *) {
-            
-            if pdf_delegate {
-                
-                self.logger.debug("Render \(source) with WKWebView (PDF)")
-                
-                let webView = WKWebView()
-                let delegate = WKWebViewPDFDelegate(completionHandler: completionHandler)
-                webView.navigationDelegate = delegate
-                
-                webView.frame = NSRect(x: 0.0, y: 0.0, width: 800, height: 640)
-                webView.loadURL(url: source)
-                return
-            }
-        }
-        
-        /*
-         
-         Ideally we would just write directly to pdf_data but this is
-         not possible with NSPrintOperation so instead we will create a
-         temporary file, write to that then read the data and remove the
-         temporary file on the way out. This is not ideal but it makes
-         for a cleaner interface for using this package and not assuming
-         that files are always been written (20200823/straup)
-         
-         */
-        
-        let temp_dir = URL(fileURLWithPath: NSTemporaryDirectory(),
-                           isDirectory: true)
-        
-        let fname = UUID().uuidString + ".pdf"
-        let target = temp_dir.appendingPathComponent(fname)
-        
-        defer {
-            do {
-                try FileManager.default.removeItem(at: target)
-            } catch (let error) {
-                logger.warning("Failed to remove \(target.absoluteString), \(error.localizedDescription)")
-            }
-        }
-        
-        rendering = true
-        
-        // WKWebKit things that don't work 2/2
-        // If this is run with webView.printOperation(with: printInfo) as the
-        // documents suggest you do then the (printOperation) run() method
-        // never completes. If this is run with NSPrintOperation(view: webView, printInfo: printInfo)
-        // then the run() method completes successfully but produces a blank
-        // PDF file.
-        
-        if #available(macOS 11.0, *){
-            
-            self.logger.debug("Render \(source) with WKWebView (NSPrint)")
-            
-            let webView = WKWebView()
-            let delegate = WKWebViewNSPrintDelegate()
-            
-            delegate.dpi = CGFloat(dpi)
-            delegate.width = CGFloat(width + (bleed * 2.0))
-            delegate.height = CGFloat(height + (bleed * 2.0))
-            delegate.margin = CGFloat(margin)
-            delegate.target = target
-            
-            webView.navigationDelegate = delegate
-            
-            webView.frame = NSRect(x: 0.0, y: 0.0, width: 800, height: 640)
-            webView.loadURL(url: source)
-            
-        } else {
-            
-            // This is the only thing that works reliably
-            // before iOS 14, MacOS 11
-            
-            self.logger.debug("Render \(source) with WebView (deprecated)")
-            
-            let webView = WebView()
-            let delegate = WebViewDelegate()
-            
-            delegate.dpi = CGFloat(dpi)
-            delegate.width = CGFloat(width + (bleed * 2.0))
-            delegate.height = CGFloat(height + (bleed * 2.0))
-            delegate.margin = CGFloat(margin)
-            delegate.target = target
-            
-            webView.frameLoadDelegate = delegate
-            
-            webView.frame = NSRect(x: 0.0, y: 0.0, width: 800, height: 640)
-            webView.mainFrame.load(URLRequest(url: source))
-            
-            // webView.mainFram
-        }
-        
-        // Blocking run loop is required to wait for the PDF to be generated.
-        
-        var pdf_data: Data!
-        
-        let runloop = RunLoop.current
-        
-        while rendering && runloop.run(mode: .default, before: .distantFuture) {
-            logger.debug("Rendering")
-        }
-        
-        if rendering {
-            completionHandler(.failure(Errors.runLoopExit))
-            return
-        }
-        
-        do {
-            try pdf_data = Data(contentsOf: target)
-        } catch (let error) {
-            completionHandler(.failure(error))
-            return
-        }
-        
-        completionHandler(.success(pdf_data))
-        return
+        webView.frame = NSRect(x: 0.0, y: 0.0, width: 800, height: 640)
+        webView.loadURL(url: source)
         
     }
 }
