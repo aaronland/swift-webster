@@ -28,7 +28,7 @@ private func newURL(url: String) -> Result<URL, Error> {
     return .success(u)
 }
 
-struct Print: AsyncParsableCommand {
+struct Render: AsyncParsableCommand {
     
     static let configuration = CommandConfiguration(abstract: "...")
     
@@ -113,6 +113,7 @@ struct Print: AsyncParsableCommand {
             }
         }
         
+        logger.debug("WAIT")
         await w.render(source: source_url, completionHandler: on_complete)
     }
 }

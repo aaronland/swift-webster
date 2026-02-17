@@ -41,6 +41,8 @@ public class Webster {
     
     public init(_ logger: Logger? = nil) {
                 
+        self.logger = logger
+        
         NotificationCenter.default.addObserver(forName: Notification.Name(rawValue: "status"),
                                                object: nil,
                                                queue: .main) { [self] (notification) in
@@ -50,9 +52,9 @@ public class Webster {
             
             switch status {
             case Status.complete:
-                working = false
+                self.working = false
             case Status.printed:
-                rendering = false
+                self.rendering = false
             default:
                 ()
             }
@@ -62,6 +64,8 @@ public class Webster {
     @MainActor public func render(source: URL, completionHandler: @escaping (Result<Data, Error>) -> Void) -> Void {
         
         working = true
+        
+        logger?.debug("Render \(source.absoluteString)")
         
         self.renderAsync(source: source, completionHandler: completionHandler)
         
@@ -81,14 +85,15 @@ public class Webster {
             NotificationCenter.default.post(name: Notification.Name("status"), object: Status.complete)
         }
         
-        self.logger?.debug("Render \(source)")
+        self.logger?.debug("Render \(source.absoluteString)")
         
         let webView = WKWebView()
         let delegate = WKWebViewPDFDelegate(completionHandler: completionHandler)
         webView.navigationDelegate = delegate
         
         webView.frame = NSRect(x: 0.0, y: 0.0, width: 800, height: 640)
-        webView.loadURL(url: source)
         
+        logger?.debug("Load \(source.absoluteString)")
+        webView.loadURL(url: source)
     }
 }
