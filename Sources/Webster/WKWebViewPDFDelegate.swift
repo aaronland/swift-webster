@@ -7,29 +7,33 @@ public class WKWebViewPDFDelegate: NSObject, WKNavigationDelegate {
     var on_complete: (Result<Data, Error>) -> Void
     
     public init(completionHandler: @escaping (Result<Data, Error>) -> Void){
+        print("PDF DELEGATE")
+
         on_complete = completionHandler
     }
     
     public func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
-        // print("DID COMMIT")
+        print("DID COMMIT")
     }
     
     public func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: any Error) {
-        // print("FAILED \(error)")
+        print("FAILED \(error)")
     }
     
     public func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: any Error) {
-        // print("FAIL PROVISIONAL")
+        print("FAIL PROVISIONAL")
     }
     
     public func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
-        // print("START")
+        print("START")
     }
     
     // https://developer.apple.com/documentation/webkit/wkwebview/3650490-createpdf
     
     
     public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        
+        print("DID FINISH YO")
         
         NotificationCenter.default.post(name: Notification.Name("status"), object: Status.printing)
         

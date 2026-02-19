@@ -15,28 +15,30 @@ public class WKWebViewNSPrintDelegate: NSObject, WKNavigationDelegate {
     private var filename: String = "webster.pdf"
     
     override init() {
+        print("NS PRINT DELEGATE")
         target = destination.appendingPathComponent(filename)
     }
     
     public func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
-        // print("DID COMMIT")
+         print("DID COMMIT")
     }
     
     public func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: any Error) {
-        // print("FAILED \(error)")
+        print("FAILED \(error)")
     }
     
     public func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: any Error) {
-        // print("FAIL PROVISIONAL")
+        print("FAIL PROVISIONAL")
     }
     
     public func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
-        // print("START")
+        print("START")
     }
     
     // https://developer.apple.com/documentation/webkit/wkwebview/3650490-createpdf
     
     public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        
         
         NotificationCenter.default.post(name: Notification.Name("status"), object: Status.printing)
         
@@ -50,7 +52,7 @@ public class WKWebViewNSPrintDelegate: NSObject, WKNavigationDelegate {
             NSPrintInfo.AttributeKey.jobSavingURL   : target!
         ]
          
-        // print("TARGET \(target)")
+        print("TARGET \(target)")
         
         let printInfo: NSPrintInfo = NSPrintInfo(dictionary: printOpts)
         let baseMargin: CGFloat = (margin + bleed) * dpi
