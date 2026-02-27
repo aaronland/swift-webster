@@ -1,6 +1,7 @@
 import Foundation
 import ArgumentParser
 
+@available(macOS 13.0, *)
 @main
 struct LabelParser: AsyncParsableCommand {
   static let configuration = CommandConfiguration(

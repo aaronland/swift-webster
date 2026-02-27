@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
     name: "swift-webster",
     platforms: [
-        .macOS(.v11)
+        .macOS(.v13)
     ],
     products: [
         .library(

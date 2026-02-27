@@ -28,6 +28,7 @@ private func newURL(url: String) -> Result<URL, Error> {
     return .success(u)
 }
 
+@available(macOS 13.0, *)
 struct Render: AsyncParsableCommand {
     
     static let configuration = CommandConfiguration(abstract: "...")

@@ -1,8 +1,9 @@
+/*
 import Foundation
 import WebKit
 
 @available(macOS 11.0, *)
-public class WKWebViewPDFDelegate: NSObject, WKNavigationDelegate {
+public class WKWebViewPDFDelegateX: NSObject, WKNavigationDelegate {
     
     var on_complete: (Result<Data, Error>) -> Void
     
@@ -98,3 +99,4 @@ public class WKWebViewPDFDelegate: NSObject, WKNavigationDelegate {
         
     }
 }
+*/
