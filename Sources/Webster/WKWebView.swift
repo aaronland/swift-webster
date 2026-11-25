@@ -120,8 +120,7 @@ final class WKWebViewDelegate: NSObject, WKNavigationDelegate {
         ]
 
         let printInfo = NSPrintInfo(dictionary: printOpts)
-        // NSPrintInfo works in points (1/72 inch); the PDF is vector, so DPI
-        // does not change the page geometry.
+        // NSPrintInfo works in points (1/72 inch).
         let pointsPerInch: CGFloat = 72.0
 
         let w = (width + bleed * 2.0) * pointsPerInch

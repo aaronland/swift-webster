@@ -8,7 +8,6 @@ struct WebsterTests {
     @MainActor
     @Test func defaults() {
         let w = Webster()
-        #expect(w.dpi == 72.0)
         #expect(w.width == 8.5)
         #expect(w.height == 11.0)
         #expect(w.marginTop == 1.0)

@@ -13,9 +13,6 @@ struct WebsterCLI: ParsableCommand {
     @Argument(help: "The path where your PDF document will be created.")
     var destination: String
 
-    @Option(help: "The DPI (dots per inch) of your output document.")
-    var dpi: Double = 72.0
-
     @Option(help: "The width (in inches) of your document.")
     var width: Double = 8.5
 
@@ -73,7 +70,6 @@ struct WebsterCLI: ParsableCommand {
 
         let w = Webster()
 
-        w.dpi = dpi
         w.width = width
         w.height = height
         w.marginTop = marginTop ?? margin

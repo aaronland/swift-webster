@@ -13,7 +13,6 @@ guard let source_url = URL(string: "https://example.com") else {
 
 let w = Webster()
 
-w.dpi = 72.0
 w.width = 11.0
 w.height = 8.5
 w.marginTop = 0.5
@@ -63,7 +62,6 @@ $ webster --width 6 --height 9 --margin-left-odd 0.75 --margin-left-even 0.5 pag
 | `--margin-left-odd`, `--margin-left-even` | `--margin-left` | Left margin for odd or even pages. |
 | `--margin-right-odd`, `--margin-right-even` | `--margin-right` | Right margin for odd or even pages. |
 | `--bleed` | 0.0 | Bleed in inches. |
-| `--dpi` | 72.0 | Accepted for compatibility. Page geometry is in points, so it does not change the PDF's page size. |
 | `--image-timeout` | 20.0 | Seconds to wait for images to load before printing. |
 | `--page-timeout` | 60.0 | Seconds to wait for the whole page to load and print. Keep it above `--image-timeout`. |
 | `--verbose` | off | Debug logging. |

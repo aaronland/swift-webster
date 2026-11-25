@@ -10,9 +10,6 @@ public enum Errors: Error {
 @MainActor
 public final class Webster {
     
-    /// Dots-per-inch of the PDF file to create
-    public var dpi: Double = 72.0
-    
     /// Width in inches of the PDF file to create
     public var width: Double = 8.5
     
