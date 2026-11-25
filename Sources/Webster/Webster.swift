@@ -34,9 +34,14 @@ public class Webster {
     private var rendering = false
     private var working = false
     
+    // LoggingSystem.bootstrap may only be called once per process.
+    private static let bootstrapLogging: Void = {
+        LoggingSystem.bootstrap { label in StreamLogHandler.standardError(label: label) }
+    }()
+    
     public init() {
      
-        LoggingSystem.bootstrap(StreamLogHandler.standardError)
+        _ = Webster.bootstrapLogging
         
         NotificationCenter.default.addObserver(forName: Notification.Name(rawValue: "status"),
                                                object: nil,
