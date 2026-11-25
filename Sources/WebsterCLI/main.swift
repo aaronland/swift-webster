@@ -3,10 +3,6 @@ import ArgumentParser
 import Webster
 import Logging
 
-enum CLIError: Error {
-    case invalidURL
-}
-
 struct WebsterCLI: ParsableCommand {
 
     static let configuration = CommandConfiguration(commandName: "webster")
@@ -26,35 +22,53 @@ struct WebsterCLI: ParsableCommand {
     @Option(help: "The height (in inches) of your document.")
     var height: Double = 11.0
 
-    @Option(help: "The margin (in inches) for each page in your document.")
+    @Option(help: "The default margin (in inches) for all sides of each page. Overridden by --margin-SIDE.")
     var margin: Double = 1.0
+
+    @Option(name: .customLong("margin-top"), help: "The top margin (in inches). Defaults to --margin.")
+    var marginTop: Double?
+
+    @Option(name: .customLong("margin-bottom"), help: "The bottom margin (in inches). Defaults to --margin.")
+    var marginBottom: Double?
+
+    @Option(name: .customLong("margin-left"), help: "The left margin (in inches). Defaults to --margin.")
+    var marginLeft: Double?
+
+    @Option(name: .customLong("margin-right"), help: "The right margin (in inches). Defaults to --margin.")
+    var marginRight: Double?
+
+    @Option(name: .customLong("margin-left-odd"), help: "The left margin (in inches) for odd pages. Overrides --margin-left.")
+    var marginLeftOdd: Double?
+
+    @Option(name: .customLong("margin-left-even"), help: "The left margin (in inches) for even pages. Overrides --margin-left.")
+    var marginLeftEven: Double?
+
+    @Option(name: .customLong("margin-right-odd"), help: "The right margin (in inches) for odd pages. Overrides --margin-right.")
+    var marginRightOdd: Double?
+
+    @Option(name: .customLong("margin-right-even"), help: "The right margin (in inches) for even pages. Overrides --margin-right.")
+    var marginRightEven: Double?
 
     @Option(help: "The bleed (in inches) for each page in your document.")
     var bleed: Double = 0.0
 
+    @Option(name: .customLong("image-timeout"), help: "The maximum time (in seconds) to wait for images to load.")
+    var imageTimeout: Double = 20.0
+
+    @Option(name: .customLong("page-timeout"), help: "The maximum time (in seconds) to wait for a page to load and print.")
+    var pageTimeout: Double = 60.0
+
     @Flag(help: "Enable verbose (debug) logging.")
     var verbose: Bool = false
 
-    func run() {
+    @MainActor
+    func render() {
 
-        var source_url: URL!
-        var target_url: URL!
+        let source_url = newURL(url: source)
+        let target_url = newURL(url: destination)
 
-        switch newURL(url: source) {
-        case .failure(let error):
-            fatalError(error.localizedDescription)
-        case .success(let u):
-            source_url = u
-        }
-
-        switch newURL(url: destination) {
-        case .failure(let error):
-            fatalError(error.localizedDescription)
-        case .success(let u):
-            guard u.isFileURL else {
-                fatalError("Destination must be a file path or file:// URI")
-            }
-            target_url = u
+        guard target_url.isFileURL else {
+            fatalError("Destination must be a file path or file:// URI")
         }
 
         let w = Webster()
@@ -62,8 +76,17 @@ struct WebsterCLI: ParsableCommand {
         w.dpi = dpi
         w.width = width
         w.height = height
-        w.margin = margin
+        w.marginTop = marginTop ?? margin
+        w.marginBottom = marginBottom ?? margin
+        w.marginLeft = marginLeft ?? margin
+        w.marginRight = marginRight ?? margin
+        w.marginLeftOdd = marginLeftOdd
+        w.marginLeftEven = marginLeftEven
+        w.marginRightOdd = marginRightOdd
+        w.marginRightEven = marginRightEven
         w.bleed = bleed
+        w.imageTimeout = imageTimeout
+        w.timeout = pageTimeout
 
         if verbose {
             w.setLogLevel(level: .debug)
@@ -87,16 +110,18 @@ struct WebsterCLI: ParsableCommand {
         w.render(source: source_url, completionHandler: on_complete)
     }
 
-    private func newURL(url: String) -> Result<URL, Error> {
+    private func newURL(url: String) -> URL {
 
         if let u = URL(string: url), u.scheme != nil {
-            return .success(u)
+            return u
         }
 
         // No scheme: treat as a filesystem path, resolved against the current directory.
         let path = (url as NSString).expandingTildeInPath
-        return .success(URL(fileURLWithPath: path).standardizedFileURL)
+        return URL(fileURLWithPath: path).standardizedFileURL
     }
 }
 
-WebsterCLI.main()
+// Top-level code in main.swift runs on the main actor, as WebKit requires.
+let command = WebsterCLI.parseOrExit()
+command.render()
