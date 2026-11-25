@@ -2,21 +2,13 @@ import Foundation
 import WebKit
 import Logging
 
-public enum Status {
-    case printing
-    case printed
-    case complete
-}
-
 public enum Errors: Error {
     case runLoopExit
-    case notImplemented
+    case printFailed
 }
 
-public class Webster {
-    
-    /// Dots-per-inch of the PDF file to create
-    public var dpi: Double = 72.0
+@MainActor
+public final class Webster {
     
     /// Width in inches of the PDF file to create
     public var width: Double = 8.5
@@ -27,33 +19,34 @@ public class Webster {
     /// Size of page bleed in inches to add to all four sides of each page
     public var bleed: Double = 0.0
     
-    /// Margin in inches of the PDF file to create
-    public var margin: Double = 1.0
+    /// Margins in inches of the PDF file to create
+    public var marginTop: Double = 1.0
+    public var marginBottom: Double = 1.0
+    public var marginLeft: Double = 1.0
+    public var marginRight: Double = 1.0
+
+    /// Optional left and right margins in inches for odd and even pages.
+    /// When set they override `marginLeft` and `marginRight` for those pages.
+    public var marginLeftOdd: Double?
+    public var marginLeftEven: Double?
+    public var marginRightOdd: Double?
+    public var marginRightEven: Double?
+    
+    /// Maximum time in seconds to wait for a page to load and print
+    public var timeout: TimeInterval = 60.0
+
+    /// Maximum time in seconds to wait for images to load before printing
+    public var imageTimeout: TimeInterval = 20.0
     
     private var logger = Logger(label: "webster")
-    private var rendering = false
-    private var working = false
+    
+    // LoggingSystem.bootstrap may only be called once per process.
+    private static let bootstrapLogging: Void = {
+        LoggingSystem.bootstrap { label in StreamLogHandler.standardError(label: label) }
+    }()
     
     public init() {
-     
-        LoggingSystem.bootstrap(StreamLogHandler.standardError)
-        
-        NotificationCenter.default.addObserver(forName: Notification.Name(rawValue: "status"),
-                                               object: nil,
-                                               queue: .main) { (notification) in
-            
-            let status = notification.object as! Status
-            self.logger.debug("Received status notification: \(status)")
-            
-            switch status {
-            case Status.complete:
-                self.working = false
-            case Status.printed:
-                self.rendering = false
-            default:
-                ()
-            }
-        }
+        _ = Webster.bootstrapLogging
     }
     
     public func setLogLevel(level: Logger.Level) -> Void {
@@ -61,114 +54,106 @@ public class Webster {
         self.logger.debug("Log level set to \(level)")
     }
     
+    /// Renders `source` to a PDF and calls `completionHandler` with the result.
+    ///
+    /// This blocks the calling (main) thread, spinning its run loop, until
+    /// rendering finishes or `timeout` elapses.
     public func render(source: URL, completionHandler: @escaping (Result<Data, Error>) -> Void) -> Void {
-
-        working = true
-        
-        self.renderAsync(source: source, completionHandler: completionHandler)
-        
-        let runloop = RunLoop.current
-        
-        while working && runloop.run(mode: .default, before: .distantFuture) {
-            
-        }
-        
-        return
-    }
-    
-    private func renderAsync(source: URL, completionHandler: @escaping (Result<Data, Error>) -> Void) -> Void {
           
-        defer {
-            NotificationCenter.default.post(name: Notification.Name("status"), object: Status.complete)
-        }
+        // WKWebView must be hosted in a window for the print operation to run.
+        // AppKit also needs an NSApplication to exist (e.g. when hosted by a test runner).
+        _ = NSApplication.shared
         
-        // 10.16 -isms need more testing; not working as expected
-        // meaning methods don't fail but PDF files are not created
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 800, height: 640),
+                              styleMask: [.borderless],
+                              backing: .buffered,
+                              defer: false)
+        window.isReleasedWhenClosed = false
+        
+        let webView = WKWebView(frame: window.contentRect(forFrameRect: window.frame))
+        window.contentView = webView
+        
+        let delegate = WKWebViewDelegate()
+        delegate.window = window
         
         /*
-        if #available(OSX 10.16, *) {
-            
-            print("LOAD \(source)")
-             let webView = WKWebView()
-             let delegate = WKWebViewDelegate(completionHandler: completionHandler)
-             
-             webView.navigationDelegate = delegate
-             webView.load(URLRequest(url: source))
-             
-            return
-            
-        } else {
-          */
+         
+         Ideally we would just write directly to pdf_data but this is
+         not possible with NSPrintOperation so instead we will create a
+         temporary file, write to that then read the data and remove the
+         temporary file on the way out. This is not ideal but it makes
+         for a cleaner interface for using this package and not assuming
+         that files are always been written (20200823/straup)
+         
+         */
         
-            // before iOS 14, MacOS 11
-            
-            let webView = WebView()
-            let delegate = WebViewDelegate()
-            
-            /*
-             
-             Ideally we would just write directly to pdf_data but this is
-             not possible with NSPrintOperation so instead we will create a
-             temporary file, write to that then read the data and remove the
-             temporary file on the way out. This is not ideal but it makes
-             for a cleaner interface for using this package and not assuming
-             that files are always been written (20200823/straup)
-             
-             */
-            
-            var pdf_data: Data!
-            
-            let temp_dir = URL(fileURLWithPath: NSTemporaryDirectory(),
-                               isDirectory: true)
-            
-            let fname = UUID().uuidString + ".pdf"
-            
-            let target = temp_dir.appendingPathComponent(fname)
-            
-            defer {
-                do {
-                    try FileManager.default.removeItem(at: target)
-                } catch (let error) {
-                    logger.warning("Failed to remove \(target.absoluteString), \(error.localizedDescription)")
-                }
-            }
-            
-            delegate.dpi = CGFloat(dpi)
-            delegate.width = CGFloat(width + (bleed * 2.0))
-            delegate.height = CGFloat(height + (bleed * 2.0))
-            delegate.margin = CGFloat(margin)
-            delegate.target = target
-            
-            webView.frameLoadDelegate = delegate
-            
-            webView.frame = NSRect(x: 0.0, y: 0.0, width: 800, height: 640)
-            webView.mainFrame.load(URLRequest(url: source))
-            
-            // Blocking run loop is required to wait for the PDF to be generated.
-            
-            rendering = true
-            
-            let runloop = RunLoop.current
-                                
-            while rendering && runloop.run(mode: .default, before: .distantFuture) {
-                
-            }
-            
-            if rendering {
-                completionHandler(.failure(Errors.runLoopExit))
-                return
-            }
-            
+        let temp_dir = URL(fileURLWithPath: NSTemporaryDirectory(),
+                           isDirectory: true)
+        
+        let fname = UUID().uuidString + ".pdf"
+        
+        let target = temp_dir.appendingPathComponent(fname)
+        
+        defer {
             do {
-                try pdf_data = Data(contentsOf: target)
+                try FileManager.default.removeItem(at: target)
             } catch (let error) {
-                completionHandler(.failure(error))
-                return
+                logger.warning("Failed to remove \(target.absoluteString), \(error.localizedDescription)")
             }
-            
-            completionHandler(.success(pdf_data))
-            return
-        /* } */
+        }
         
+        delegate.width = CGFloat(width)
+        delegate.height = CGFloat(height)
+        delegate.marginTop = CGFloat(marginTop)
+        delegate.marginBottom = CGFloat(marginBottom)
+        delegate.marginLeft = CGFloat(marginLeft)
+        delegate.marginRight = CGFloat(marginRight)
+        delegate.marginLeftOdd = marginLeftOdd.map { CGFloat($0) }
+        delegate.marginLeftEven = marginLeftEven.map { CGFloat($0) }
+        delegate.marginRightOdd = marginRightOdd.map { CGFloat($0) }
+        delegate.marginRightEven = marginRightEven.map { CGFloat($0) }
+        delegate.bleed = CGFloat(bleed)
+        delegate.imageTimeout = imageTimeout
+        delegate.target = target
+        
+        var finished = false
+        
+        delegate.onFinished = { [logger] in
+            logger.debug("Rendering finished")
+            finished = true
+        }
+        
+        webView.navigationDelegate = delegate
+        
+        if source.isFileURL {
+            webView.loadFileURL(source, allowingReadAccessTo: source.deletingLastPathComponent())
+        } else {
+            webView.load(URLRequest(url: source))
+        }
+        
+        // Blocking run loop is required to wait for the PDF to be generated.
+        
+        let runloop = RunLoop.current
+        let deadline = Date().addingTimeInterval(timeout)
+        
+        while !finished && Date() < deadline && runloop.run(mode: .default, before: deadline) {
+            
+        }
+        
+        if !finished {
+            completionHandler(.failure(Errors.runLoopExit))
+            return
+        }
+        
+        if let error = delegate.error {
+            completionHandler(.failure(error))
+            return
+        }
+        
+        do {
+            completionHandler(.success(try Data(contentsOf: target)))
+        } catch (let error) {
+            completionHandler(.failure(error))
+        }
     }
 }
